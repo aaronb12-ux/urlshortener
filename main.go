@@ -1,12 +1,42 @@
 package main
 
 import (
-	"net/http"
 	"fmt"
-
+	"log"
+	"net/http"
+	"gopkg.in/yaml.v3"
 )
 
-func createMapHandler(pathToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
+    
+type PathURL struct {
+    Path string `yaml:"path"`
+    URL  string `yaml:"url"`
+}
+
+func parseYAML(YAML []byte) []PathURL { //unmarshal the YAML into the 'PathURL' struct. This creates a slice of 'PathURL' objects
+
+	var parsed []PathURL
+
+	if err := yaml.Unmarshal(YAML, &parsed); err != nil { 
+		log.Fatal(err)
+	}
+
+	return parsed
+
+}
+
+func yamlToMap(yaml []PathURL) map[string]string { //convert the parsed yaml into a map for easier key value access
+
+	m := make(map[string]string)
+
+	for _, element := range yaml {
+		m[element.URL] = element.Path	
+	}
+
+	return m
+}
+
+func createMapHandler(pathToUrls map[string]string, fallback http.Handler) http.HandlerFunc { 
      
 	return func (w http.ResponseWriter, r *http.Request) {
 		
@@ -20,16 +50,23 @@ func createMapHandler(pathToUrls map[string]string, fallback http.Handler) http.
 	}
 }
 
-func createYAMlHandler(YAML []byte, fallback http.Handler) (http.HandlerFunc, error) {
 
-	//parse YAML
+func createYAMlHandler(YAML []byte, fallback http.Handler) (http.HandlerFunc) {
+	 
+	parsedYAML := parseYAML(YAML)
+	
+	yamlToMap := yamlToMap(parsedYAML)
 
-	//convert to map
+	return func (w http.ResponseWriter, r *http.Request) {
+		path, exists := yamlToMap[r.URL.Path]
+
+		if exists {
+			http.Redirect(w, r, path, http.StatusSeeOther)
+		} else {
+			fallback.ServeHTTP(w, r)
+		}
+	}
 }
-
-
-
-
 
 func main() {
 
@@ -43,19 +80,17 @@ func main() {
 	mapHandler := createMapHandler(pathsToUrls, mux)
 
 	yaml := `
-			- path: /urlshort
-  				url: https://github.com/gophercises/urlshort
-			- path: /urlshort-final
-  				url: https://github.com/gophercises/urlshort/tree/solution
-			`
-	yamlHandler, err := createYAMlHandler([]byte(yaml), mapHandler)
+- path: /urlshort
+  url: https://github.com/gophercises/urlshort
+- path: /urlshort-final
+  url: https://github.com/gophercises/urlshort/tree/solution
+`
+	//yamlHandler, err := createYAMlHandler([]byte(yaml), mapHandler)
 
-	if err != nil {
-		panic(err)
-	}
-
+	yamlHandler := createYAMlHandler([]byte(yaml), mapHandler)
+	
 	fmt.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", mapHandler)
+	http.ListenAndServe(":8080", yamlHandler)
 
 }
 

@@ -6,10 +6,14 @@ import (
 	"aaronb.com/urlshortener/handlers"
 
 )
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("The path you entered does not map to a url"))
+}
 
 func main() {
 
 	mux := http.NewServeMux() //http res and res handling
+	mux.HandleFunc("/", homeHandler)
 
 	pathsToUrls := map[string]string { //set of mapped shortened urls to actual urls
 		"/dogbreed" : "https://www.petfinder.com/dogs-and-puppies/breeds/",

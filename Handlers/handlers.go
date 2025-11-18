@@ -68,3 +68,8 @@ func CreateYAMlHandler(YAML []byte, fallback http.Handler) (http.HandlerFunc) {
 		}
 	}
 }
+
+
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("The path you entered does not map to a URL"))
+}

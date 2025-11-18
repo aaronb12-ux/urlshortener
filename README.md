@@ -56,16 +56,6 @@ http://localhost:8080/gh
 - **`gopkg.in/yaml.v3`** — YAML parsing  
 - **Custom handler functions** — for chaining fallback behavior
 
-## Project Structure
-
-```
-/
-├── main.go
-├── handler.go
-├── urls.yaml
-└── README.md
-```
-
 ## What I Learned
 
 - Creating and chaining custom HTTP handlers in Go  
